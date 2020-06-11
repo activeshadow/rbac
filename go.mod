@@ -1,5 +1,8 @@
-module github.com/activeshadow/rbac
+module actshad.dev/rbac
 
-go 1.12
+go 1.14
 
-require github.com/pkg/errors v0.8.1
+require (
+	actshad.dev/logr v1.1.0
+	github.com/go-logr/logr v0.1.0
+)

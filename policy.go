@@ -1,27 +1,36 @@
 package rbac
 
 import (
+	"errors"
 	"path/filepath"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
-var knownVerbs = map[string]struct{}{
-	"list":   struct{}{},
-	"get":    struct{}{},
-	"create": struct{}{},
-	"update": struct{}{},
-	"patch":  struct{}{},
-}
+var ErrResourceNamesExist = errors.New("resource names already exist for policy")
 
-type Policy struct {
-	Resources     []string
-	ResourceNames []string
-	Verbs         []string
+var knownVerbs = map[string]struct{}{
+	"list":   {},
+	"get":    {},
+	"create": {},
+	"update": {},
+	"patch":  {},
 }
 
 type Policies []*Policy
+
+type Policy struct {
+	Resources     []string `json:"resources"`
+	ResourceNames []string `json:"resource_names"`
+	Verbs         []string `json:"verbs"`
+}
+
+func (this *Policy) SetResourceNames(names ...string) error {
+	if this.ResourceNames != nil {
+		return ErrResourceNamesExist
+	}
+
+	return this.AddResourceNames(names...)
+}
 
 func (this *Policy) AddResourceNames(names ...string) error {
 	var invalid []string
@@ -64,17 +73,22 @@ func (this *Policy) AddVerbs(verbs ...string) error {
 }
 
 func (this Policy) ResourceNameAllowed(name string) bool {
+	var allowed bool
+
 	for _, n := range this.ResourceNames {
-		if n == "*" {
-			return true
-		}
+		negate := strings.HasPrefix(n, "!")
+		n = strings.Replace(n, "!", "", 1)
 
 		if matched, _ := filepath.Match(n, name); matched {
-			return true
+			if negate {
+				return false
+			}
+
+			allowed = true
 		}
 	}
 
-	return false
+	return allowed
 }
 
 func (this Policy) VerbAllowed(verb string) bool {

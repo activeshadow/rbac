@@ -1,9 +1,9 @@
 package rbac
 
 // map a user to multiple roles
-var bindings = make(map[string][]Role)
+var bindings = make(map[string][]*Role)
 
-func BindUserToRole(user string, role Role) {
+func BindUserToRole(user string, role *Role) {
 	roles := bindings[user]
 	roles = append(roles, role)
 	bindings[user] = roles
